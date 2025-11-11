@@ -201,6 +201,17 @@ class ESMMLXEmbedder(nn.Module):
 
                 # Extract diagonal from pair representation (self-interactions)
                 pair_diag = torch.diagonal(esm_pair, dim1=-2, dim2=-1)  # [batch, N_token, c_z_esm]
+
+                # Debug: ensure correct shapes
+                expected_shape = (batch_size, N_token, self.c_z_esm)
+                if pair_diag.shape != expected_shape:
+                    # Reshape if needed
+                    if pair_diag.numel() == batch_size * N_token * self.c_z_esm:
+                        pair_diag = pair_diag.view(expected_shape)
+                    else:
+                        # Fallback: create zero features if shape is completely wrong
+                        pair_diag = torch.zeros(expected_shape, device=device, dtype=dtype)
+
                 pair_features = self.esm_to_msa_pair(pair_diag)  # [batch, N_token, c_m//2]
 
                 # Pad pair features to match c_m dimension

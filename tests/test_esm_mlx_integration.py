@@ -12,7 +12,7 @@ import numpy as np
 from pathlib import Path
 
 # Add OpenFold3 to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from openfold3.core.model.feature_embedders.esm_mlx_embedder import (
@@ -204,14 +204,24 @@ def benchmark_esm_mlx_performance():
         batch = create_test_batch(sequence)
 
         # Warmup
-        with torch.no_grad():
-            _ = embedder(batch)
+        try:
+            with torch.no_grad():
+                _ = embedder(batch)
+        except Exception as warmup_error:
+            print(f"   ❌ Warmup failed: {warmup_error}")
+            continue
 
         # Benchmark
-        start_time = time.time()
-        with torch.no_grad():
-            s_input, s, z, m, msa_mask = embedder(batch)
-        end_time = time.time()
+        try:
+            start_time = time.time()
+            with torch.no_grad():
+                s_input, s, z, m, msa_mask = embedder(batch)
+            end_time = time.time()
+        except Exception as benchmark_error:
+            print(f"   ❌ Benchmark failed: {benchmark_error}")
+            import traceback
+            traceback.print_exc()
+            continue
 
         runtime = end_time - start_time
         residues_per_second = len(sequence) / runtime
