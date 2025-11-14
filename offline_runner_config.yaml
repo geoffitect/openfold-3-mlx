@@ -1,19 +1,28 @@
 data_module_args:
-  num_workers: 0  # Disable multiprocessing to avoid pickling issues
-  num_workers_validation: 0
   batch_size: 1
-
-pl_trainer_args:
-  devices: 1
-  accelerator: gpu
-
+  num_workers: 0
+  num_workers_validation: 0
+experiment_settings:
+  mode: predict
+  use_msa_server: false
+  use_templates: true
 model_update:
-  presets: ["predict", "pae_enabled"]
   custom:
     settings:
       memory:
         eval:
-          # FORCE MLX attention for Apple Silicon - NO MORE CUTLASS!
           use_deepspeed_evo_attention: false
           use_lma: false
           use_mlx_attention: true
+  presets:
+  - predict
+  - pae_enabled
+pl_trainer_args:
+  accelerator: gpu
+  devices: 1
+template_preprocessor_settings:
+  cache_directory: template_cache
+  max_sequences_parse: 20
+  max_templates: 5
+  structure_directory: template_structures
+  structure_file_format: cif
